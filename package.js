@@ -1,0 +1,14 @@
+{
+  "name": "mercado-affiliates",
+  "version": "1.0.0",
+  "description": "MERCADO Portal with Secure eBay API Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}
