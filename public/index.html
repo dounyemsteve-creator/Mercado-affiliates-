@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MERCADO Affiliates & AI Studio</title>
+  <style>
+    :root {
+      --bg-main: #080808;
+      --bg-card: #121214;
+      --bg-header: #0f0f10;
+      --primary: #2563eb;
+      --success: #10b981;
+      --border-color: #222225;
+      --text-muted: #888888;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg-main); color: #fff; min-height: 100vh; padding-bottom: 40px; }
+
+    /* PRE-REGISTRATION OVERLAY SCREEN */
+    .prereg-screen {
+      position: fixed; inset: 0; background: #000; z-index: 1000;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .prereg-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 440px;
+    }
+    .prereg-card h2 { margin-bottom: 8px; font-size: 20px; text-align: center; }
+    .prereg-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; text-align: center; }
+    .prereg-field { margin-bottom: 14px; }
+    .prereg-field label { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    .prereg-field input, .prereg-field select {
+      width: 100%; padding: 11px; background: #0a0a0b; border: 1px solid var(--border-color);
+      border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+    }
+    .btn-block { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    /* HEADER */
+    .app-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px; background: var(--bg-header); border-bottom: 1px solid var(--border-color);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .brand { font-size: 16px; font-weight: 800; letter-spacing: 1px; color: #e53935; }
+    .brand span { color: #fff; font-weight: 300; font-size: 12px; opacity: 0.7; }
+    .nav-toggle { background: none; border: none; color: #fff; font-size: 22px; cursor: pointer; padding: 4px; }
+    
+    .btn-withdraw {
+      background: var(--success); color: #fff; border: none; padding: 6px 14px;
+      border-radius: 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed; top: 0; left: -280px; width: 260px; height: 100%;
+      background: #121214; border-right: 1px solid var(--border-color); transition: transform 0.3s ease;
+      z-index: 200; padding: 20px;
+    }
+    .sidebar.active { transform: translateX(280px); }
+    .sidebar-close { background: none; border: none; color: var(--text-muted); font-size: 20px; float: right; cursor: pointer; }
+    .profile-section { display: flex; align-items: center; gap: 12px; margin: 25px 0; }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #252528; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    
+    .nav-group { margin-bottom: 20px; }
+    .nav-group label { font-size: 11px; text-transform: uppercase; color: #555; font-weight: 700; letter-spacing: 0.5px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 0;
+      background: none; border: none; color: #aaa; font-size: 14px; cursor: pointer; text-align: left;
+    }
+    .nav-item:hover, .nav-item.active { color: #fff; font-weight: 600; }
+
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 150; backdrop-filter: blur(2px); }
+    .overlay.active { display: block; }
+
+    /* MAIN VIEWS */
+    .main-content { max-width: 1150px; margin: 0 auto; padding: 12px; }
+    .view-panel { display: none; }
+    .view-panel.active { display: block; }
+
+    .tab-bar { display: flex; gap: 24px; border-bottom: 1px solid #1a1a1c; margin-bottom: 12px; padding-bottom: 4px; }
+    .tab-btn {
+      padding: 6px 0; background: none; border: none; color: var(--text-muted);
+      font-weight: 600; font-size: 15px; cursor: pointer; border-bottom: 2px solid transparent;
+    }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    .search-row { display: flex; gap: 8px; margin-bottom: 15px; }
+    .search-input { flex: 1; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
+    .search-btn { background: var(--primary); color: #fff; border: none; padding: 0 16px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+    .product-grid { display: flex; flex-direction: column; gap: 12px; }
+    .product-card { background: var(--bg-card); border: 1px solid #1c1c1f; border-radius: 10px; padding: 10px; display: flex; gap: 12px; }
+    .product-img { width: 110px; height: 110px; object-fit: cover; background: #1a1a1c; border-radius: 6px; flex-shrink: 0; }
+    .product-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .product-title { font-size: 13px; color: #ddd; line-height: 1.3; height: 34px; overflow: hidden; }
+    .product-stats { font-size: 11px; color: #666; margin: 4px 0; }
+    .product-price { font-size: 15px; font-weight: 700; color: #fff; }
+    
+    .earn-badge {
+      margin-top: 6px; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.2);
+      padding: 6px 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .earn-amount { color: var(--primary); font-weight: 700; font-size: 13px; }
+    .earn-rate { font-size: 10px; color: #777; }
+
+    .card-panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 15px; }
+    .card-panel label { display: block; font-size: 12px; color: var(--text-muted); margin: 10px 0 4px; }
+    .card-panel input { width: 100%; padding: 10px; background: #0a0a0b; border: 1px solid var(--border-color); border-radius: 6px; color: #fff; outline: none; }
+
+    /* VOICE VIDEO STUDIO */
+    .mercado-vg { background: #050505; border: 1px solid #222; border-radius: 26px; padding: 24px; }
+    .vg-heading span { display: inline-block; padding: 6px 12px; border-radius: 20px; background: #fff; color: #000; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; }
+    .vg-heading h1 { margin: 12px 0 6px; font-size: 26px; }
+    .vg-heading p { margin: 0 0 20px 0; color: #888; font-size: 14px; }
+    .vg-grid { display: grid; grid-template-columns: 380px 1fr; gap: 25px; }
+    .vg-settings, .vg-preview-area { background: #0b0b0b; border: 1px solid #202020; border-radius: 21px; padding: 21px; }
+    .vg-settings label { display: block; margin: 16px 0 8px; color: #aaa; font-size: 13px; }
+    .vg-input { width: 100%; padding: 11px; border-radius: 11px; border: 1px solid #292929; background: #111; color: #fff; outline: none; }
+    .vg-upload { height: 120px; border: 1px dashed #555; border-radius: 17px; background: #101010; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; overflow: hidden; }
+    #vgImagePreview { display: none; width: 100%; height: 100%; object-fit: contain; }
+    .vg-generate { width: 100%; margin-top: 22px; padding: 15px; border: 0; border-radius: 13px; background: #fff; color: #000; font-weight: 900; cursor: pointer; }
+    .vg-video { position: relative; width: min(100%, 360px); aspect-ratio: 9/16; margin: auto; overflow: hidden; border-radius: 20px; background: #111; }
+    .vg-product { width: 100%; height: 100%; object-fit: contain; display: none; }
+    
+    .vg-controls { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+    .vg-controls-row { display: flex; gap: 8px; }
+    .vg-controls button { flex: 1; padding: 11px; border-radius: 10px; background: #151515; color: #fff; border: 1px solid #292929; cursor: pointer; font-weight: 600; text-align: center; font-size: 13px; }
+    
+    .btn-download-action { background: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important; }
+    .btn-capcut-action { background: #000 !important; border-color: #333 !important; color: #fff !important; font-weight: 700 !important; }
+    
+    .social-export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+    .platform-btn { background: #18181a; border: 1px solid #2a2a2d; padding: 8px 4px; border-radius: 8px; font-size: 11px; color: #ccc; cursor: pointer; text-align: center; }
+
+    @media(max-width:800px){ .vg-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <!-- PRE-REGISTRATION FLOW OVERLAY -->
+  <div id="preregOverlay" class="prereg-screen">
+    <div id="preregStep1" class="prereg-card">
+      <h2>Join Affiliate Network</h2>
+      <p>Select your country and enter your contact details to match your local currency.</p>
+      
+      <div class="prereg-field">
+        <label>Your Email Address</label>
+        <input type="email" id="regEmail" placeholder="client@example.com" required>
+      </div>
+
+      <div class="prereg-field">
+        <label>Country / Region</label>
+        <select id="regCountry" onchange="updateCountryCurrency()">
+          <option value="US|USD|$">United States (USD $)</option>
+          <option value="GB|GBP|£">United Kingdom (GBP £)</option>
+          <option value="EU|EUR|€">European Union (EUR €)</option>
+          <option value="CM|XAF|FCFA">Cameroon (XAF FCFA)</option>
+          <option value="NG|NGN|₦">Nigeria (NGN ₦)</option>
+          <option value="CA|CAD|CA$">Canada (CAD CA$)</option>
+        </select>
+      </div>
+
+      <div class="prereg-field">
+        <label>Phone Number</label>
+        <input type="tel" id="regPhone" placeholder="+1234567890" required>
+      </div>
+
+      <button class="btn-block" onclick="submitPreRegistration()">Continue to Verification</button>
+    </div>
+
+    <div id="preregStep2" class="prereg-card" style="display: none;">
+      <h2>Verify Security Code</h2>
+      <p>A 6-digit code was sent from <strong>dounyemsteve@gmail.com</strong> to your email.</p>
+      
+      <div class="prereg-field">
+        <label>Enter 6-Digit Verification Code</label>
+        <input type="text" id="verificationCode" placeholder="Enter code" maxlength="6">
+      </div>
+
+      <button class="btn-block" style="background: var(--success);" onclick="verifyRegistrationCode()">Verify & Access Program</button>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <button class="nav-toggle" id="openNav">☰</button>
+    <div class="brand">MERCADO <span>Portals</span></div>
+    <div class="header-actions">
+      <button class="btn-withdraw">Withdrawal</button>
+    </div>
+  </header>
+
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" id="closeNav">✕</button>
+    <div class="profile-section">
+      <div class="avatar">👤</div>
+      <div>
+        <div id="userProfileEmail" style="font-weight: bold; font-size: 13px;">Affiliate Partner</div>
+        <div id="userProfileMeta" style="font-size: 11px; color: #666;">ID: 882940</div>
+      </div>
+    </div>
+    <div class="nav-group">
+      <label>PRODUCTS</label>
+      <button class="nav-item active" data-view="productsView">🏷 Live eBay Search</button>
+    </div>
+    <div class="nav-group">
+      <label>TOOLS</label>
+      <button class="nav-item" data-view="linkGenView">🔗 Link Generator</button>
+      <button class="nav-item" data-view="videoGenView">🎬 Voice Video Studio</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <section id="productsView" class="view-panel active">
+      <div class="tab-bar">
+        <button class="tab-btn active">Featured eBay Products</button>
+      </div>
+
+      <div class="search-row">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search real eBay products...">
+        <button class="search-btn" onclick="searchEbayProducts()">Search eBay</button>
+      </div>
+
+      <div class="product-grid" id="productGridContainer">
+        <p style="color:#888; text-align:center; padding: 20px;">Complete verification to load live items...</p>
+      </div>
+    </section>
+
+    <section id="linkGenView" class="view-panel">
+      <h2 style="margin-bottom: 15px; font-size: 18px;">Link Generator</h2>
+      <div class="card-panel">
+        <label for="sourceUrlInput">Product URL</label>
+        <input type="text" id="sourceUrlInput" placeholder="https://example.com/item...">
+        
+        <label for="trackingIdInput">Tracking ID</label>
+        <input type="text" id="trackingIdInput" value="882940" readonly>
+
+        <button class="btn-block" style="margin-top:15px;" id="btnGenerateLink">Get Trackable Link</button>
+      </div>
+    </section>
+
+    <section id="videoGenView" class="view-panel">
+      <div class="mercado-vg">
+        <div class="vg-heading">
+          <span>MERCADO AI</span>
+          <h1>Product Voice Video Studio</h1>
+        </div>
+
+        <div class="vg-grid">
+          <div class="vg-settings">
+            <label>Product Image Upload</label>
+            <div id="vgUpload" class="vg-upload">
+              <input id="vgFile" type="file" accept="image/*" hidden>
+              <img id="vgImagePreview" alt="Product">
+              <span id="uploadTxt">+ Upload Photo</span>
+            </div>
+
+            <label>Product Name</label>
+            <input id="vgName" class="vg-input" placeholder="Example: Air Jordan 4">
+
+            <label>Price</label>
+            <input id="vgPrice" class="vg-input" placeholder="Example: 210.00">
+
+            <button id="vgGenerate" class="vg-generate">✨ Create Video</button>
+          </div>
+
+          <div class="vg-preview-area">
+            <div id="vgVideo" class="vg-video">
+              <img id="vgProduct" class="vg-product" alt="Product">
+            </div>
+            
+            <div class="vg-controls">
+              <div class="vg-controls-row">
+                <button id="vgPlay">🔊 Play Voice</button>
+                <button class="btn-download-action" onclick="downloadVideoToGallery()">📥 Save to Gallery</button>
+              </div>
+              
+              <button class="btn-capcut-action" onclick="shareNativeCapcutStyle()">🚀 Share Video (CapCut)</button>
+
+              <div style="margin-top: 6px;">
+                <div class="social-export-grid">
+                  <button class="platform-btn" onclick="openPlatformDirect('tiktok')">🎵 TikTok</button>
+                  <button class="platform-btn" onclick="openPlatformDirect('instagram')">📸 Instagram</button>
+                  <button class="platform-btn" onclick="openPlatformDirect('telegram')">✈️ Telegram</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SENDER_EMAIL = "dounyemsteve@gmail.com";
+    const COMMISSION_RATE = 0.15;
+    let userCurrencySymbol = "$";
+    let generatedVerificationCode = "882940";
+
+    function updateCountryCurrency() {
+      const selected = document.getElementById("regCountry").value;
+      userCurrencySymbol = selected.split("|")[2];
+    }
+
+    function submitPreRegistration() {
+      const email = document.getElementById("regEmail").value.trim();
+      const phone = document.getElementById("regPhone").value.trim();
+      if (!email || !phone) { alert("Please complete all registration fields."); return; }
+
+      generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      alert('[SYSTEM SIMULATION]\nA code (' + generatedVerificationCode + ') was sent from ' + SENDER_EMAIL + ' to ' + email);
+
+      document.getElementById("preregStep1").style.display = "none";
+      document.getElementById("preregStep2").style.display = "block";
+    }
+
+    function verifyRegistrationCode() {
+      const code = document.getElementById("verificationCode").value.trim();
+      if (code !== generatedVerificationCode) { alert("Invalid code."); return; }
+
+      const email = document.getElementById("regEmail").value.trim();
+      const countryCode = document.getElementById("regCountry").value.split("|")[0];
+
+      document.getElementById("userProfileEmail").textContent = email;
+      document.getElementById("userProfileMeta").textContent = 'Region: ' + countryCode + ' | Verified';
+      document.getElementById("preregOverlay").style.display = "none";
+      
+      searchEbayProducts('drone');
+    }
+
+    // Connects to internal Node backend endpoint to protect eBay API credentials
+    async function searchEbayProducts(queryParam) {
+      const query = queryParam || document.getElementById('searchInput').value.trim() || 'drone';
+      const container = document.getElementById('productGridContainer');
+      container.innerHTML = '<p style="color:#aaa; text-align:center; padding:20px;">Searching live eBay catalog...</p>';
+
+      try {
+        const response = await fetch('/api/search?q=' + encodeURIComponent(query));
+        const data = await response.json();
+
+        if (!data.itemSummaries || data.itemSummaries.length === 0) {
+          container.innerHTML = '<p style="color:#aaa; text-align:center; padding:20px;">No eBay items found.</p>';
+          return;
+        }
+
+        renderProductCards(data.itemSummaries);
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<p style="color:#e53935; text-align:center; padding:20px;">Error connecting to eBay backend service.</p>';
+      }
+    }
+
+    function renderProductCards(items) {
+      const container = document.getElementById('productGridContainer');
+      container.innerHTML = items.map((item) => {
+        const rawPrice = parseFloat(item.price ? item.price.value : 0);
+        const earn = (rawPrice * COMMISSION_RATE).toFixed(2);
+        const itemImg = item.image ? item.image.imageUrl : 'https://via.placeholder.com/150';
+
+        return `
+          <div class="product-card">
+            <img src="${itemImg}" class="product-img" alt="${item.title}">
+            <div class="product-info">
+              <div class="product-title">${item.title}</div>
+              <div class="product-stats">Seller: ${item.seller ? item.seller.username : 'eBay Verified'}</div>
+              <div class="product-price">${userCurrencySymbol}${rawPrice.toFixed(2)}</div>
+              <div class="earn-badge">
+                <div>
+                  <div class="earn-amount">Est. Earn: ${userCurrencySymbol}${earn}</div>
+                  <div class="earn-rate">Rate: 15.0% Fixed</div>
+                </div>
+                <a href="${item.itemWebUrl}" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none; font-size:12px;">View on eBay</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') searchEbayProducts();
+    });
+
+    const overlay = document.getElementById('overlay');
+    const sidebar = document.getElementById('sidebar');
+
+    document.getElementById('openNav').addEventListener('click', () => { sidebar.classList.add('active'); overlay.classList.add('active'); });
+    document.getElementById('closeNav').addEventListener('click', () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+    overlay.addEventListener('click', () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const viewId = e.currentTarget.getAttribute('data-view');
+        document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        e.currentTarget.classList.add('active');
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      });
+    });
+
+    document.getElementById("vgUpload").addEventListener("click", () => document.getElementById("vgFile").click());
+    document.getElementById("vgFile").addEventListener("change", function(){
+      const file = this.files[0];
+      if(file){
+        const reader = new FileReader();
+        reader.onload = e => {
+          document.getElementById("vgImagePreview").src = e.target.result;
+          document.getElementById("vgImagePreview").style.display = "block";
+          document.getElementById("vgProduct").src = e.target.result;
+          document.getElementById("vgProduct").style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    function downloadVideoToGallery() {
+      const img = document.getElementById("vgProduct");
+      if (!img.src || img.style.display === "none") { alert("Select or generate media first."); return; }
+      const a = document.createElement('a');
+      a.href = img.src;
+      a.download = 'mercado_promo_media.png';
+      a.click();
+    }
+
+    async function shareNativeCapcutStyle() {
+      const img = document.getElementById("vgProduct");
+      if (!img.src || img.style.display === "none") { alert("Generate video first."); return; }
+      try {
+        const res = await fetch(img.src);
+        const blob = await res.blob();
+        const file = new File([blob], "promo.png", { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'MERCADO Promo' });
+        } else {
+          downloadVideoToGallery();
+        }
+      } catch (e) { console.log(e); }
+    }
+
+    function openPlatformDirect(platform) {
+      downloadVideoToGallery();
+      setTimeout(() => {
+        let appUrl = "";
+        switch (platform) {
+          case 'tiktok': appUrl = "snssdk1128://"; break;
+          case 'instagram': appUrl = "instagram://camera"; break;
+          case 'telegram': appUrl = "https://t.me/share/url?url=" + encodeURIComponent(window.location.href); break;
+        }
+        if (appUrl) window.open(appUrl, '_blank');
+      }, 500);
+    }
+  </script>
+</body>
+</html>
