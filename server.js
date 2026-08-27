@@ -8,9 +8,12 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy endpoint using EBAY_TOKEN
+// Serve static assets from the 'public' folder
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
+
+// eBay Search Proxy API Endpoint
 app.get('/api/search', async (req, res) => {
   const query = req.query.q || 'drone';
   const token = process.env.EBAY_TOKEN;
@@ -45,10 +48,12 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
+// Explicitly send index.html for root and fallback routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
